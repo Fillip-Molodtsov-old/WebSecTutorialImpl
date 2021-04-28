@@ -1,0 +1,26 @@
+custom:
+  postgres:
+    get-student-by-id: >
+      SELECT student_id, name
+      FROM students
+      WHERE student_id = ?;
+    get-all-students: >
+      SELECT student_id, name
+      FROM students;
+    create-student: >
+      INSERT INTO students (name)
+      values (?);
+    update-student: >
+      UPDATE students
+      SET name = ?
+      WHERE student_id = ?;
+    delete-student: >
+      DELETE FROM students
+      WHERE student_id = ?;
+    get-user-by-username: >
+      SELECT user_id, password, role
+      FROM users
+      WHERE user_id = ?;
+    create-user: >
+      INSERT INTO users (user_id, password, role)
+      VALUES (?, ?, ?);

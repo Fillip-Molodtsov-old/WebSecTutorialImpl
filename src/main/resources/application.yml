@@ -1,0 +1,5 @@
+spring:
+  config:
+    import:
+        - ./queries/sql.yml
+        - postgres.yml
