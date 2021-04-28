@@ -1,7 +1,12 @@
 package com.mldtsv.amigossecurity.security;
 
+import com.mldtsv.amigossecurity.jwt.JwtRequestFilter;
+import com.mldtsv.amigossecurity.jwt.JwtUsernameAndPasswordAuthenticationFilter;
+import com.mldtsv.amigossecurity.jwt.JwtUtil;
 import com.mldtsv.amigossecurity.security.domain.Permissions;
 import com.mldtsv.amigossecurity.security.domain.Roles;
+import com.mldtsv.amigossecurity.web.exception.ExceptionHandlerFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -9,6 +14,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
@@ -19,10 +25,27 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+    private JwtRequestFilter jwtRequestFilter;
+    private JwtUtil jwtUtil;
+    private ExceptionHandlerFilter exceptionHandlerFilter;
+
+    @Autowired
+    public SecurityConfig(JwtUtil jwtUtil, JwtRequestFilter jwtRequestFilter,
+                          ExceptionHandlerFilter exceptionHandlerFilter) {
+        this.jwtUtil = jwtUtil;
+        this.jwtRequestFilter = jwtRequestFilter;
+        this.exceptionHandlerFilter = exceptionHandlerFilter;
+    }
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
        http
             .csrf().disable()
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and()
+            .addFilterBefore(exceptionHandlerFilter,JwtUsernameAndPasswordAuthenticationFilter.class)
+            .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager(), jwtUtil))
+            .addFilterAfter(jwtRequestFilter, JwtUsernameAndPasswordAuthenticationFilter.class)
             .authorizeRequests()
             .antMatchers( HttpMethod.POST,"/api/v1/user/register").permitAll()
             .antMatchers(HttpMethod.PUT, "/api/v1/management/student/**")
@@ -32,9 +55,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers(HttpMethod.DELETE, "/api/v1/management/student/**")
                .hasAuthority(Permissions.STUDENT_WRITE.getAuthority())
 //            .antMatchers("/api/**").hasRole("STUDENT")
-            .anyRequest().authenticated()
-            .and()
-            .httpBasic();
+            .anyRequest().authenticated();
     }
 
     @Bean(name = "pwdEncoder")

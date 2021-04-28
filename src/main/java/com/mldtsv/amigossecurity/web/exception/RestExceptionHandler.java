@@ -12,7 +12,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 public class RestExceptionHandler  extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(value = {IllegalStateException.class})
-    protected ResponseEntity<Object> handleConflict(IllegalStateException ex, WebRequest req) {
+    protected ResponseEntity<Object> handleIllegalStateConflict(IllegalStateException ex, WebRequest req) {
         var body = ErrorBody.builder().message(ex.getMessage())
                 .tip("get drunk").build();
         return handleExceptionInternal(ex, body, new HttpHeaders(), HttpStatus.BAD_REQUEST, req);
